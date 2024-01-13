@@ -61,7 +61,7 @@ class App:
 
         w, h = self.screen_size
         surf = pg.Surface((w, h))
-        bw, bh = BOARD_SIZE[0] * CELL_SIZE, BOARD_SIZE[1] * CELL_SIZE
+        bw, bh = self.board.size[0] * CELL_SIZE, self.board.size[1] * CELL_SIZE
 
         # Main screen border
         draw_border(
@@ -157,16 +157,36 @@ class App:
 
         return symbols
 
-    def restart(self):
+    def restart(self, board_size=None, mines=None):
         """ Method to restart the game. Called when the player press 'r'
         or clicks the smile button """
-        self.board.__init__(BOARD_SIZE, MINES)
+        board_size = board_size if board_size else self.board.size
+        mines = mines if mines else self.board.mines
+
+        oldboard_size = self.board.size
+
+        self.board.__init__(board_size, mines)
+
         self.start_time = None
+        self.alive = True
+        self.won = False
 
         self.clock_display.set_value(0)
 
-        self.alive = True
-        self.won = False
+        if board_size == oldboard_size:
+            return
+
+        self.screen_size = (
+            CELL_SIZE * board_size[0] + 25,
+            CELL_SIZE * board_size[1] + 64
+        )
+
+        self.smile_button.pos = self.screen_size[0] // 2 - 13, 16
+
+        self.window = pg.display.set_mode(self.screen_size)
+        self.background = self.render_background()
+
+
 
     def on_success_dig(self):
         self.won = self.board.win()
@@ -201,9 +221,21 @@ class App:
                     pg.quit()
                     sys.exit()
 
-                # Reset the game when the player pressed 'r' key
+                # Reset the current game
                 if event.key == pg.K_r:
                     self.restart()
+
+                # Starts a new game with beginner difficulty
+                if event.key == pg.K_1:
+                    self.restart((9, 9), 10)
+
+                # Starts a new game with intermediate difficulty
+                if event.key == pg.K_2:
+                    self.restart((16, 16), 40)
+
+                # Starts a new game with expert difficulty
+                if event.key == pg.K_3:
+                    self.restart((30, 16), 99)
 
             # If the player is not alive, skip.
             if not self.alive or self.won:
@@ -318,7 +350,7 @@ class App:
                 )
 
     def render_displays(self):
-        bw, bh = BOARD_SIZE[0] * CELL_SIZE, BOARD_SIZE[1] * CELL_SIZE
+        bw, bh = self.board.size[0] * CELL_SIZE, self.board.size[1] * CELL_SIZE
 
         # Update and render remaining mines display
         self.flags_display.set_value(self.board.mines_remaining())
