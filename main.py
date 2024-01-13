@@ -186,8 +186,6 @@ class App:
         self.window = pg.display.set_mode(self.screen_size)
         self.background = self.render_background()
 
-
-
     def on_success_dig(self):
         self.won = self.board.win()
 
